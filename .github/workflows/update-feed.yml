@@ -15,12 +15,21 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
@@ -29,13 +38,18 @@ jobs:
           pip install -r requirements.txt
           python -m playwright install --with-deps chromium
 
-      - name: Collect public fixture pages
+      - name: Collect public fixtures
         run: python scraper.py
+
+      - name: Synchronize repository
+        run: git pull --rebase origin main
 
       - name: Publish JSON feed
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add public/external-matches.json public/scrape-status.json
-          git diff --cached --quiet || git commit -m "Update public football fixtures"
-          git push
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+          else
+            git commit -m "Update public football fixtures"
+            git push origin HEAD:main
+          fi
