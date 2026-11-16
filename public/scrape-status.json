@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-11-16T18:52:37.144835+00:00",
+  "collector": "Playwright public-page best effort",
+  "sources": [
+    {
+      "source": "NESINE",
+      "url": "https://www.nesine.com/iddaa/futbol",
+      "ok": true,
+      "httpStatus": 200,
+      "matches": 28,
+      "error": null
+    },
+    {
+      "source": "MACKOLIK",
+      "url": "https://www.mackolik.com/canli-sonuclar",
+      "ok": true,
+      "httpStatus": 200,
+      "matches": 57,
+      "error": null
+    }
+  ],
+  "warning": "Sayfa yapısı veya erişim koruması değişirse kaynak boş dönebilir. Boş veri, o tarihte maç olmadığı anlamına gelmez."
+}
