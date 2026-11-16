@@ -1,23 +1,25 @@
 {
-  "generatedAt": "2026-11-16T18:52:37.144835+00:00",
-  "collector": "Playwright public-page best effort",
+  "generatedAt": "2026-11-16T19:53:06.062789+00:00",
+  "collector": "Playwright public-page fixture collector",
   "sources": [
     {
       "source": "NESINE",
       "url": "https://www.nesine.com/iddaa/futbol",
-      "ok": true,
+      "ok": false,
+      "pageLoaded": true,
       "httpStatus": 200,
-      "matches": 28,
-      "error": null
+      "matches": 0,
+      "error": "Sayfa açıldı ancak doğrulanabilir maç bulunamadı."
     },
     {
       "source": "MACKOLIK",
       "url": "https://www.mackolik.com/canli-sonuclar",
-      "ok": true,
+      "ok": false,
+      "pageLoaded": true,
       "httpStatus": 200,
-      "matches": 57,
-      "error": null
+      "matches": 0,
+      "error": "Sayfa açıldı ancak doğrulanabilir maç bulunamadı."
     }
   ],
-  "warning": "Sayfa yapısı veya erişim koruması değişirse kaynak boş dönebilir. Boş veri, o tarihte maç olmadığı anlamına gelmez."
+  "warning": "Yalnızca saat ve takım bilgisi doğrulanabilen maçlar kaydedilir. Boş veri maç olmadığı anlamına gelmez."
 }
