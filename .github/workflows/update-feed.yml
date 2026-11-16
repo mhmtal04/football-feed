@@ -41,15 +41,37 @@ jobs:
       - name: Collect public fixtures
         run: python scraper.py
 
-      - name: Synchronize repository
-        run: git pull --rebase origin main
-
-      - name: Publish JSON feed
+      - name: Publish JSON feed with retry
+        shell: bash
         run: |
           git add public/external-matches.json public/scrape-status.json
+
           if git diff --cached --quiet; then
             echo "No changes to publish."
-          else
-            git commit -m "Update public football fixtures"
-            git push origin HEAD:main
+            exit 0
           fi
+
+          git commit -m "Update public football fixtures"
+
+          for attempt in 1 2 3 4 5; do
+            echo "Push attempt $attempt of 5"
+
+            git fetch origin main
+
+            if ! git rebase origin/main; then
+              echo "Rebase failed. Aborting to avoid overwriting repository changes."
+              git rebase --abort || true
+              exit 1
+            fi
+
+            if git push origin HEAD:main; then
+              echo "Feed published successfully."
+              exit 0
+            fi
+
+            echo "Push rejected; repository changed during push. Retrying..."
+            sleep 3
+          done
+
+          echo "Could not publish after 5 attempts."
+          exit 1
