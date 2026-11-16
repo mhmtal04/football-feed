@@ -1,0 +1,93 @@
+name: Football Feed - Clean Workflow
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+permissions:
+  contents: write
+
+# Aynı depodaki eski football-feed iş akışıyla eşzamanlı yazmayı önler.
+concurrency:
+  group: football-feed
+  cancel-in-progress: true
+
+jobs:
+  scrape:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Collect public fixtures
+        run: python scraper.py
+
+      - name: Commit generated JSON files
+        run: |
+          git add public/external-matches.json public/scrape-status.json
+          if git diff --cached --quiet; then
+            echo "No feed changes to publish."
+          else
+            git commit -m "Update public football fixtures"
+          fi
+
+      - name: Fetch latest main
+        run: git fetch origin main
+
+      - name: Rebase generated feed commit
+        shell: bash
+        run: |
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "Working tree is clean."
+          fi
+
+          if ! git rebase origin/main; then
+            echo "Rebase failed. Checking whether only generated feed files conflict."
+
+            conflicted="$(git diff --name-only --diff-filter=U)"
+
+            if [ -z "$conflicted" ]; then
+              git rebase --abort
+              echo "Unexpected rebase conflict."
+              exit 1
+            fi
+
+            while IFS= read -r file; do
+              case "$file" in
+                public/external-matches.json|public/scrape-status.json)
+                  git checkout --theirs -- "$file"
+                  git add "$file"
+                  ;;
+                *)
+                  git rebase --abort
+                  echo "Conflict in an unexpected file: $file"
+                  exit 1
+                  ;;
+              esac
+            done <<< "$conflicted"
+
+            GIT_EDITOR=true git rebase --continue
+          fi
+
+      - name: Push feed to GitHub
+        run: git push origin HEAD:main
